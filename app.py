@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request
 import sqlite3 as sql
+from sqlite3 import Error
 
 app = Flask(__name__)
 
@@ -34,21 +35,22 @@ def enter_new_agent():
 def addrec():
     if request.method == 'POST':
         try:
-            agent_id = request.form['AgentId']
-            agent_name = request.form['AgentName']
+            agent_nm = request.form['AgentName']
             agent_alias = request.form['AgentAlias']
+            agent_security_lvl = request.form['AgentSecurityLvl']
             login_password = request.form['LoginPassword']
 
             with sql.connect("sqlite3.db") as con:
                 cur = con.cursor()
                 cur.execute(" INSERT INTO secretMessage (AgentId,AgentName,AgentAlias,LoginPassword) VALUES(?, ?, ?, ?) ",
-                            (agent_id, agent_name, agent_alias, login_password))
+                            (agent_nm, agent_alias, agent_security_lvl, login_password))
 
                 con.commit()
                 msg = "Record successfully added"
         except:
             con.rollback()
-            msg = "error in insert operation"
+            msg = "You cannot enter an empty name\n\tYou cannot enter in an empty alias\n" \
+                  "The security level must be a numeric value from 1 to 10\nYou cannot enter an empty password"
 
         finally:
             return render_template("addrec.html", msg=msg)
