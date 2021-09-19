@@ -4,7 +4,23 @@
     <meta charset="UTF-8">
     <title>List</title>
 </head>
+
 <body>
     <h2>List all the agents</h2>
+    <section>
+        <!-- Table for output all the data -->
+        <table>
+            {% for row in rows %}
+            <tr>
+                <td>{{row[0]}}</td>
+                <td>{{row[1]}}</td>
+                <td>{{row[2]}}</td>
+                <td>{{row[3]}}</td>
+            </tr>
+            {% endfor %}
+        </table>>
+
+    </section>
+
 </body>
 </html>
