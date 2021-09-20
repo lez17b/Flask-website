@@ -34,25 +34,34 @@ def enter_new_agent():
 @app.route('/addrec', methods=['POST', 'GET'])
 def addrec():
     if request.method == 'POST':
+
+        agent_nm = str(request.form['AgentName'])
+        agent_alias = str(request.form['AgentAlias'])
+        agent_security_lvl = request.form['AgentSecurityLvl']
+        login_password = str(request.form['LoginPassword'])
         try:
-            agent_nm = request.form['AgentName']
-            agent_alias = request.form['AgentAlias']
-            agent_security_lvl = request.form['AgentSecurityLvl']
-            login_password = request.form['LoginPassword']
+            if not agent_nm or agent_nm.isspace() or not agent_alias or agent_alias.isspace() \
+                    or not login_password or login_password.isspace():
+                raise Exception
 
             with sql.connect("sqlite3.db") as con:
                 cur = con.cursor()
-                cur.execute(" INSERT INTO secretMessage (AgentId,AgentName,AgentAlias,LoginPassword) VALUES(?, ?, ?, ?) ",
+                cur.execute(" INSERT INTO secretMessage (AgentName,AgentAlias,AgentSecurityLvl,LoginPassword) VALUES(?, ?, ?, ?) ",
                             (agent_nm, agent_alias, agent_security_lvl, login_password))
 
                 con.commit()
                 msg = "Record successfully added"
         except:
             con.rollback()
-            msg = "You cannot enter an empty name\n\tYou cannot enter in an empty alias\n" \
-                  "The security level must be a numeric value from 1 to 10\nYou cannot enter an empty password"
-
+            msg = "Error(s) in insert operation: "
+            if not agent_nm or agent_nm.isspace():
+                msg += "\nName cannot be empty."
+            if not agent_alias or agent_alias.isspace():
+                msg += "\nAlias cannot be empty."
+            if not login_password or login_password.isspace():
+                msg += "\nPassword cannot be empty."
         finally:
+            msg = msg.split('\n')
             return render_template("addrec.html", msg=msg)
             con.close()
 
