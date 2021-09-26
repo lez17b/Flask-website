@@ -2,7 +2,11 @@
 <html>
    <body>
 
-      Query Result : {{ msg }}
+      <h2>Query Result:</h2>
+      {% for i in msg %}
+          <p>{{ i }}</p>
+      {% endfor %}
+
       <h3><a href = "\">go back to home page</a></h3>
 
    </body>
