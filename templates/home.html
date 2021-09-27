@@ -5,7 +5,30 @@
     <title> Home </title>
 </head>
 <body>
-    <h1> <a href="http://127.0.0.1:5000/enternew">Add new secret agent</a></h1>
-    <h1><a href="http://127.0.0.1:5000/list">List secret agent</a></h1>
+
+{% with messages = get_flashed_messages() %}
+    {% if messages %}
+        <ul>
+            {% for message in messages %}
+                <li>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+{% endwith %}
+
+{% if session['logged_in'] %}
+    <h1>Welcome {{name}} </h1>
+    {% if security == '1' %}
+        <h2> <a href="/enternew">Add new secret agent</a></h2>
+        <h2><a href="/list">List secret agent</a></h2>
+        <h2><a href="/logout">Log out</a></h2>
+    {% elif security == '2' %}
+        <h2><a href="/list">List secret agent</a></h2>
+        <h2><a href="/logout">Log out</a></h2>
+    {% elif security == '3' %}
+        <h2><a href="/logout">Log out</a></h2>
+    {% endif %}
+{% endif %}
+
 </body>
 </html>

@@ -7,25 +7,26 @@
 <body>
     <h2>Enter new agent</h2>
 
-    <!-- Input form to gather the new secret agent's information -->
-    <section>
-        <form action = "{{ url_for('addrec') }}" method = "POST">
-            <h3>Secret agent information</h3>
-            Agent Name<br>
-            <input type = "text" name = "AgentName" /></br>
+    {% if session['logged_in'] %}
+        <!-- Input form to gather the new secret agent's information -->
+        <section>
+            <form action = "{{ url_for('addrec') }}" method = "POST">
+                <h3>Secret agent information</h3>
+                Agent Name<br>
+                <input type = "text" name = "AgentName" /></br>
 
-            Agent Alias<br>
-            <input type = "text" name = "AgentAlias" /></br>
+                Agent Alias<br>
+                <input type = "text" name = "AgentAlias" /></br>
 
-            Agent Security Level<br>
-            <input type = "text" name = "AgentSecurityLvl" /><br>
+                Agent Security Level<br>
+                <input type = "text" name = "AgentSecurityLevel" /><br>
 
-            Password<br>
-            <input type = "text" name = "LoginPassword" /><br>
-            <input type = "submit" value = "submit" /><br>
-        </form>
-    </section>
-
+                Password<br>
+                <input type = "text" name = "LoginPassword" /><br>
+                <input type = "submit" value = "submit" /><br>
+            </form>
+        </section>
+    {% endif %}
     <!-- Link to go back to the home page -->
     <h3><a href = "\">go back to home page</a></h3>
 </body>

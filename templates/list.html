@@ -8,21 +8,23 @@
 <body>
     <h2>List all the agents</h2>
     <section>
-        <!-- Table for output all the data -->
-        <table border="1">
-            <td>Agent name</td>
-            <td>Agent alias</td>
-            <td>Agent security levels</td>
-            <td>Login Password</td>
-            {% for row in rows %}
-            <tr>
-                <td>{{row[0]}}</td>
-                <td>{{row[1]}}</td>
-                <td>{{row[2]}}</td>
-                <td>{{row[3]}}</td>
-            </tr>
-            {% endfor %}
-        </table>
+        {% if session['logged_in'] %}
+            <!-- Table for output all the data -->
+            <table border="1">
+                <td>Agent name</td>
+                <td>Agent alias</td>
+                <td>Agent security levels</td>
+                <td>Login Password</td>
+                {% for row in rows %}
+                <tr>
+                    <td>{{row[0]}}</td>
+                    <td>{{row[1]}}</td>
+                    <td>{{row[2]}}</td>
+                    <td>{{row[3]}}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        {% endif %}
     </section>
     <h3><a href = "\">go back to home page</a></h3>
 
