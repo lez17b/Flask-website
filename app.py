@@ -26,8 +26,7 @@ def index():
     if not session.get('logged_in'):
         return render_template('login.html')
     else:
-        print(request.form)
-        return render_template('home.html', name=session['name'], security=session['agent'])
+        return render_template('home.html', name=session['name'], security=session['admin'])
 
 
 # List page
@@ -137,7 +136,6 @@ def do_admin_login():
     try:
         nm = request.form['AgentName']
         pwd = request.form['LoginPassword']
-        sec = request.form['AgentSecurityLevel']
 
         with sql.connect("sqlite3.db") as con:
             con.row_factory = sql.Row
@@ -150,7 +148,14 @@ def do_admin_login():
         if row is not None:
             session['name'] = nm
             session['logged_in'] = True
-            session['agent'] = sec
+
+            if int(row['AgentSecurityLevel']) == 1:
+                session['admin'] = 1
+            elif int(row['AgentSecurityLevel']) == 2:
+                session['admin'] = 2
+            else:
+                session['admin'] = 3
+
         else:
             session['logged_in'] = False
             flash('invalid username and/or password invalid!')
