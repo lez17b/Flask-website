@@ -1,12 +1,13 @@
 """
 Name: Luciano Zavala
-Date: 09/26/2021
-Assignment: Module 5: Role Based Access Control
-Due Date: 09/26/2021
+Date: 10/03/2021
+Assignment: Module 6: Encrypt Data in database
+Due Date: 10/03/2021
 About this project: The goal of this project is to develop a frontend application that will
-interact with the SecretAgent database for a small scale real-world application using third-party
-Python libraries. In this script, we have the code for our flask website. The application has added role based
-and a login system.
+interact with the Agent database for a small scale real-world application using third-party
+Python libraries (Flask, sqlite3, Crypto.Cipher, Pandas) . In this script, we have the code
+for our flask website. The application has added an role based login system and the database
+has been encrypted.
 Assumptions: N/A
 All work below was performed by Luciano Zavala
 """
@@ -14,6 +15,8 @@ All work below was performed by Luciano Zavala
 import os
 from flask import Flask, render_template, request, session, flash
 import sqlite3 as sql
+import Encryption
+import pandas as pd
 
 
 app = Flask(__name__)
@@ -40,9 +43,32 @@ def list_records():
 
         cur = con.cursor()
         cur.execute("select * from secretMessage")
-
         rows = cur.fetchall()
-        return render_template("list.html", rows=rows)
+
+        # data frame creation
+        df = pd.DataFrame(rows, columns=['AgentId', 'AgentName', 'AgentAlias', 'AgentSecurityLevel', 'LoginPassword'])
+
+        # DECRYPTING THE VALUE IN THE DATA FRAME IS NOT WORKING 100%
+        # The code is based on the class given by Dr. works and also the implementation from module 6 videos
+        # CODE BLOCK: convert to an array
+
+        #                          Agent Name decryption
+        # i = 0
+        # for name in df['AgentName']:
+        #   nm = str(Encryption.cipher.decrypt(name)) <--- Cypher popping and error
+        #   df._set_value(i, 'AgentName', nm)
+        #   i += 1
+
+        #                          Agent Alias decryption
+        # ii = 0
+        # for name in df['AgentAlias']:
+        #   nm = str(Encryption.cipher.decrypt(name)) <--- Cypher popping and error
+        #   df._set_value(ii, 'AgentAlias', nm)
+        #   ii += 1
+
+        con.close()
+        print(df)
+        return render_template("list.html", rows=df)
 
 
 # Add new secret agent page
@@ -72,12 +98,16 @@ def addrec():
                 if not name or name.isspace():
                     message += "Error! The Name field cannot be empty.\n"
                     err = True  # Assign true to the error variable
+                # Encrypt name value
+                crypt_name = str(Encryption.cipher.encrypt(bytes(name, 'utf-8')).decode("utf-8"))
 
                 # Assigning alias to a variable and validating it
                 alias = request.form["AgentAlias"]
                 if not alias or alias.isspace():
                     message += "Error! The Alias field cannot be empty.\n"
                     err = True
+                # Encrypt alias value
+                crypt_alias = str(Encryption.cipher.encrypt(bytes(alias, 'utf-8')).decode("utf-8"))
 
                 # Try-Except statement to assign security level to a variable and validate it
 
@@ -91,13 +121,14 @@ def addrec():
                     if security_level < 1 or security_level > 10:
                         message += "Error! The SecurityLevel must be between the values 1 and 10.\n"
                         err = True
-                        global_security_level = security_level
 
                 # Assigning password to a variable and validating it
                 password = request.form["LoginPassword"]
                 if not password or password.isspace():
                     message += "Error! The Password field cannot be empty.\n"
                     err = True
+                # Encrypt Password value
+                crypt_password = str(Encryption.cipher.encrypt(bytes(password, 'utf-8')).decode("utf-8"))
 
                 # Inside this if statement, we connect to our database
                 if not err:
@@ -108,7 +139,7 @@ def addrec():
                         # Execute method to insert the values into the table/database
                         cur.execute(
                             "INSERT INTO secretMessage(AgentName,AgentAlias,AgentSecurityLevel,LoginPassword) VALUES (?,?,?,?)",
-                            (name, alias, security_level, password))
+                            (crypt_name, crypt_alias, security_level, crypt_password))
 
                         # We commit our changes
                         conn.commit()
@@ -124,6 +155,7 @@ def addrec():
                 conn.close()
 
 
+# Logout route
 @app.route("/logout")
 def logout():
     session['name'] = ""
@@ -131,24 +163,31 @@ def logout():
     return index()
 
 
+# Login page and authentication
 @app.route('/login', methods=['POST'])
 def do_admin_login():
     try:
-        nm = request.form['AgentName']
+        # gets the user name and password and the encrypts each one
+        name = request.form['AgentName']
+        nm = str(Encryption.cipher.encrypt(bytes(name, 'utf-8')).decode("utf-8"))
         pwd = request.form['LoginPassword']
+        pwd = str(Encryption.cipher.encrypt(bytes(pwd, 'utf-8')).decode("utf-8"))
 
         with sql.connect("sqlite3.db") as con:
             con.row_factory = sql.Row
             cur = con.cursor()
 
+        # call the DB for the records
         sql_select_query = """select * from secretMessage where AgentName = ? and LoginPassword = ?"""
         cur.execute(sql_select_query, (nm, pwd))
 
+        # Definition of the global session variables
         row = cur.fetchone()
         if row is not None:
-            session['name'] = nm
+            session['name'] = str(Encryption.cipher.decrypt(nm))
             session['logged_in'] = True
 
+        # Security level assignation
             if int(row['AgentSecurityLevel']) == 1:
                 session['admin'] = 1
             elif int(row['AgentSecurityLevel']) == 2:

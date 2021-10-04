@@ -11,16 +11,20 @@
         {% if session['logged_in'] %}
             <!-- Table for output all the data -->
             <table border="1">
-                <td>Agent name</td>
-                <td>Agent alias</td>
-                <td>Agent security levels</td>
-                <td>Login Password</td>
-                {% for row in rows %}
+                <thead><tr>
+                    <td>Agent Id</td>
+                    <td>Agent name</td>
+                    <td>Agent alias</td>
+                    <td>Agent security levels</td>
+                    <td>Login Password</td>
+                </tr></thead>
+                {% for row in rows.itertuples() %}
                 <tr>
-                    <td>{{row[0]}}</td>
                     <td>{{row[1]}}</td>
                     <td>{{row[2]}}</td>
                     <td>{{row[3]}}</td>
+                    <td>{{row[4]}}</td>
+                    <td>{{row[5]}}</td>
                 </tr>
                 {% endfor %}
             </table>
