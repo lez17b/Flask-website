@@ -1,13 +1,14 @@
 """
 Name: Luciano Zavala
-Date: 10/03/2021
-Assignment: Module 6: Encrypt Data in database
-Due Date: 10/03/2021
+Date: 10/10/2021
+Assignment: Module 6: Send Encrypted Message to Boss
+Due Date: 10/10/2021
 About this project: The goal of this project is to develop a frontend application that will
 interact with the Agent database for a small scale real-world application using third-party
 Python libraries (Flask, sqlite3, Crypto.Cipher, Pandas) . In this script, we have the code
 for our flask website. The application has added an role based login system and the database
-has been encrypted.
+has been encrypted. There is alos an option to send an ecrypted message to boss and a database
+to keep record of this messages.
 Assumptions: N/A
 All work below was performed by Luciano Zavala
 """
@@ -17,7 +18,8 @@ from flask import Flask, render_template, request, session, flash
 import sqlite3 as sql
 import Encryption
 import pandas as pd
-
+import socket
+import random
 
 app = Flask(__name__)
 app.debug = True
@@ -30,6 +32,65 @@ def index():
         return render_template('login.html')
     else:
         return render_template('home.html', name=session['name'], security=session['admin'])
+
+
+# Help page
+@app.route('/help')
+def help():
+    if not session.get('logged_in'):
+        return render_template('help.html')
+    else:
+        return render_template('help.html', name=session['name'])
+
+
+# Send help posting method
+@app.route('/help', methods=['POST'])
+def send_help_message():
+    if not session.get('logged_in'):
+        return render_template('login.html')
+    else:
+        if request.method == 'POST':
+            try:
+                err = False  # Error assigned to false for error checking
+                message = ""  # Message we will print out using the addrec.html page
+                agent_id = str(session.get('agentId'))
+                msg = request.form['message']
+
+                # Concatenate the message and id
+                msg = agent_id + ";" + msg
+
+                if not msg or msg.isspace():
+                    message += "Error! The Message field cannot be empty.\n"
+                    err = True  # Assign true to the error variable
+
+                # Encrypt message
+                msg = str(Encryption.cipher.encrypt(bytes(msg, 'utf-8')).decode('utf-8'))
+
+                HOST, PORT = "localhost", 9999
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                # Connect to server and send data
+                sock.connect((HOST, PORT))
+
+                sock.sendall(bytes(msg, "utf-8"))
+
+                sock.close()
+
+                message += "Help message sent!"
+            except sock.error as e:
+                message += "Error sending help message:", e
+            finally:
+                msg_id = random.randint(1, 100)
+                if not err:
+                    with sql.connect('./sqlite3.db') as conn:
+                        cur = conn.cursor()
+
+                        # Execute method to insert the values into the table/database
+                        cur.execute("""INSERT INTO bossMessage(MessageId, AgentId, Message)VALUES(?, ?, ?);""",
+                                    (msg_id, agent_id, msg))
+                        # We commit our changes
+                        conn.commit()
+                # message += "Record added successfully!"
+                return render_template("addrec.html", msg=str(message))
 
 
 # List page
@@ -48,26 +109,26 @@ def list_records():
         # data frame creation
         df = pd.DataFrame(rows, columns=['AgentId', 'AgentName', 'AgentAlias', 'AgentSecurityLevel', 'LoginPassword'])
 
-        # DECRYPTING THE VALUE IN THE DATA FRAME IS NOT WORKING 100%
         # The code is based on the class given by Dr. works and also the implementation from module 6 videos
         # CODE BLOCK: convert to an array
 
-        #                          Agent Name decryption
-        # i = 0
-        # for name in df['AgentName']:
-        #   nm = str(Encryption.cipher.decrypt(name)) <--- Cypher popping and error
-        #   df._set_value(i, 'AgentName', nm)
-        #   i += 1
+        # Agent Name decryption
+        i = 0
+        for name in df['AgentName']:
+            nm = str(Encryption.cipher.decrypt(name))
+            df._set_value(i, 'AgentName', nm)
+            i += 1
 
-        #                          Agent Alias decryption
-        # ii = 0
-        # for name in df['AgentAlias']:
-        #   nm = str(Encryption.cipher.decrypt(name)) <--- Cypher popping and error
-        #   df._set_value(ii, 'AgentAlias', nm)
-        #   ii += 1
+        # Agent Alias decryption
+        ii = 0
+
+        for alias in df['AgentAlias']:
+            alias = str(Encryption.cipher.decrypt(alias))
+            df._set_value(ii, 'AgentAlias', alias)
+            ii += 1
 
         con.close()
-        print(df)
+        # print(df)
         return render_template("list.html", rows=df)
 
 
@@ -83,7 +144,6 @@ def enter_new_agent():
 # Add record route
 @app.route('/addrec', methods=['POST', 'GET'])
 def addrec():
-
     if not session.get('logged_in'):
         return render_template('login.html')
     else:
@@ -186,8 +246,9 @@ def do_admin_login():
         if row is not None:
             session['name'] = str(Encryption.cipher.decrypt(nm))
             session['logged_in'] = True
+            session['agentId'] = row['AgentId']
 
-        # Security level assignation
+            # Security level assignation
             if int(row['AgentSecurityLevel']) == 1:
                 session['admin'] = 1
             elif int(row['AgentSecurityLevel']) == 2:
@@ -209,4 +270,3 @@ def do_admin_login():
 if __name__ == '__main__':
     app.secret_key = os.urandom(12)
     app.run(debug=True)
-
