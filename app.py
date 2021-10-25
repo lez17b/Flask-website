@@ -1,18 +1,18 @@
 """
 Name: Luciano Zavala
-Date: 10/10/2021
-Assignment: Module 6: Send Encrypted Message to Boss
-Due Date: 10/10/2021
+Date: 10/24/2021
+Assignment: Module 8: Send Authenticated Message to Boss
+Due Date: 10/24/2021
 About this project: The goal of this project is to develop a frontend application that will
 interact with the Agent database for a small scale real-world application using third-party
 Python libraries (Flask, sqlite3, Crypto.Cipher, Pandas) . In this script, we have the code
 for our flask website. The application has added an role based login system and the database
-has been encrypted. There is alos an option to send an ecrypted message to boss and a database
-to keep record of this messages.
+has been encrypted. There is also an option to send an ecrypted message to boss and a database
+to keep record of this messages. For the last version an authenticated version of the messaging
+server was included.
 Assumptions: N/A
 All work below was performed by Luciano Zavala
 """
-
 import os
 from flask import Flask, render_template, request, session, flash
 import sqlite3 as sql
@@ -20,9 +20,10 @@ import Encryption
 import pandas as pd
 import socket
 import random
+import hmac
+import hashlib
 
 app = Flask(__name__)
-app.debug = True
 
 
 # Index page
@@ -84,13 +85,75 @@ def send_help_message():
                     with sql.connect('./sqlite3.db') as conn:
                         cur = conn.cursor()
 
+                        # Message decryption for DB storage
+                        msg_arr = str(Encryption.cipher.decrypt(msg)).split(";")
+                        msg = msg_arr[1]
+
                         # Execute method to insert the values into the table/database
                         cur.execute("""INSERT INTO bossMessage(MessageId, AgentId, Message)VALUES(?, ?, ?);""",
                                     (msg_id, agent_id, msg))
                         # We commit our changes
                         conn.commit()
-                # message += "Record added successfully!"
+                message += "Record added successfully!"
                 return render_template("addrec.html", msg=str(message))
+
+
+# Send authenticated message page
+@app.route('/sendMSGtoBossHMAC')
+def bossMessageHMAC():
+    if not session.get('logged_in'):
+        return render_template("login.html")
+    else:
+        return render_template("hmac_help.html", name=session['name'])
+
+
+# Authentication routing method
+@app.route('/sendMSGtoBossHMAC', methods=['POST'])
+def sendMessageToBossHMAC():
+    if not session.get('logged_in'):
+        return render_template("login.html")
+    else:
+        if request.method == 'POST':
+            try:
+                # define the values
+                err = False
+                message = ""
+                msg = request.form['message']
+                print(msg)
+                agent_id = str(session['agentId'])
+                print(agent_id)
+
+                message_to_send = agent_id + " " + msg
+
+                m = bytes(message_to_send, 'utf-8')
+
+                # input validation
+                if not msg or msg.isspace():
+                    message += "Error! You cannot enter in an empty message.\n"
+                    err = True
+
+                # Server connection
+                if not err:
+                    host, port = "localhost", 8888
+                    secret = b'1234'
+                    encrypted_msg = Encryption.cipher.encrypt(m)
+
+                    tag_msg = hmac.new(secret, m, digestmod=hashlib.sha3_512).digest()
+                    authenticated_msg = encrypted_msg + tag_msg
+
+                    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    sock.connect((host, port))
+                    sock.sendall(authenticated_msg)
+
+                    sock.close()
+                    message += "Message successfully sent to boss!"
+            except:
+                message += "Error! Message was NOT sent to Boss."
+
+            finally:
+
+                message = message.split('\n')
+                return render_template("addrec.html", msg=message)
 
 
 # List page
