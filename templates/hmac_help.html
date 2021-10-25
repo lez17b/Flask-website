@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Send Message to Boss with authentication</title>
+</head>
+<body>
+    <h2>Send Message to Boss using HMAC with Encryption</h2>
+    <form action="{{ url_for('sendMessageToBossHMAC') }}" method="POST">
+        <label>Message:</label><br>
+        <input type="password" name="message"><br>
+        <input type="submit" value="Send Message">
+    </form>
+</body>
+</html>
