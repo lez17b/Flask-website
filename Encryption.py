@@ -1,18 +1,20 @@
 """
 Name: Luciano Zavala
-Date: 10/10/2021
-Assignment: Module 8: Send Authenticated Message to Boss
-Due Date: 10/10/2021
+Date: 11/07/2021
+Assignment: Module 11: Using Threads - Notify if any new messages about X are sent
+Due Date: 11/07/2021
 About this project: The goal of this project is to develop a frontend application that will
 interact with the Agent database for a small scale real-world application using third-party
 Python libraries (Flask, sqlite3, Crypto.Cipher, Pandas) . In this script, we have the code
 for our flask website. The application has added an role based login system and the database
-has been encrypted. There is alos an option to send an ecrypted message to boss and a database
+has been encrypted. There is also an option to send an ecrypted message to boss and a database
 to keep record of this messages. For the last version an authenticated version of the messaging
-server was included.
+server was included. The final feature added to the code was a notification script for different
+threads.
 Assumptions: N/A
 All work below was performed by Luciano Zavala
 """
+
 import string, base64
 
 ##################################
